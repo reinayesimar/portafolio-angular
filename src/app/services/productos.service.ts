@@ -8,18 +8,60 @@ import { Producto } from '../interfaces/producto.interface';
 export class ProductosService {
   cargando = true;
   productos: Producto[] = [];
+  productoFiltrado: Producto[] = [];
 
   constructor( private http: HttpClient ) {
     this.cargarProductos();
    }
 
   private cargarProductos() {
-    this.http.get('https://angular-html-d4552.firebaseio.com/productos_idx.json')
+
+    return new Promise( ( resolve, reject ) => {
+      this.http.get('https://angular-html-d4552.firebaseio.com/productos_idx.json')
       .subscribe( (resp: Producto[]) => {
         this.productos = resp;
         this.cargando = false;
-
+        resolve();
       });
+    });
   }
+
+  getProducto( id: string) {
+    return this.http.get(`https://angular-html-d4552.firebaseio.com/productos/${ id }.json`);
+  }
+
+  buscarProducto( termino: string ) {
+
+    if ( this.productos.length === 0 ) {
+      // cargar productos
+      this.cargarProductos().then( () => {
+        // ejecutar despues de tener los productos
+        // aplicar el filtro
+        this.filtrarProduto( termino );
+      });
+    }
+    else {
+      // aplicar el filtro
+      this.filtrarProduto( termino );
+    }
+  }
+
+  filtrarProduto( termino: string ) {
+    this.productoFiltrado = [];
+
+    termino = termino.toLowerCase();
+
+    this.productos.forEach( prod => {
+      const tituloLower = prod.titulo.toLowerCase();
+
+      if ( prod.categoria.indexOf( termino ) >= 0 || tituloLower.indexOf( termino ) >= 0 ) {
+        this.productoFiltrado.push( prod );
+
+      }
+    });
+
+
+  }
+
 }
 
